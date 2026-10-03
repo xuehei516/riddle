@@ -50,6 +50,8 @@ public class PlayerController : MonoBehaviour
 	private float moveInput;
 	private bool isGrounded;
 
+	private float platformVelocityX = 0f;
+
 	private void Awake()
 	{
 		rigidBody2D = GetComponent<Rigidbody2D>();
@@ -64,7 +66,7 @@ public class PlayerController : MonoBehaviour
 
 	private void FixedUpdate()
 	{
-		rigidBody2D.velocity = new Vector2(moveInput * speed, rigidBody2D.velocity.y);
+		rigidBody2D.velocity = new Vector2(moveInput * speed + platformVelocityX, rigidBody2D.velocity.y);
 
 		if (jumpBufferTimer > 0f && coyoteTimer > 0f && jumpTimer <= 0f)
 		{
@@ -112,6 +114,28 @@ public class PlayerController : MonoBehaviour
 		if (jumpBufferTimer > 0)
 		{
 			jumpBufferTimer -= Time.deltaTime;
+		}
+	}
+
+	private void OnCollisionStay2D(Collision2D collision)
+	{
+		if (collision.gameObject.TryGetComponent<MovingPlatform>(out var platform))
+		{
+			// 判断接触面朝上（确保角色是踩在平台顶部，而不是顶到底部或侧面）
+			if (collision.contacts.Length > 0 && collision.contacts[0].normal.y > 0.5f)
+			{
+				platformVelocityX = platform.VelocityX;
+				return;
+			}
+		}
+		platformVelocityX = 0f;
+	}
+
+	private void OnCollisionExit2D(Collision2D collision)
+	{
+		if (collision.gameObject.GetComponent<MovingPlatform>() != null)
+		{
+			platformVelocityX = 0f;
 		}
 	}
 }
