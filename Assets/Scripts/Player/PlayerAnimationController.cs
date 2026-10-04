@@ -6,11 +6,14 @@ using UnityEngine;
 public class PlayerAnimationController : MonoBehaviour
 {
 	#region 动画参数哈希
-	private static readonly int SpeedHash =
-		Animator.StringToHash("Speed");
+	private static readonly int HorizontalSpeedHash =
+		Animator.StringToHash("HorizontalSpeed");
 
-	private static readonly int FallingHash =
-		Animator.StringToHash("Falling");
+	private static readonly int VerticalSpeedHash =
+		Animator.StringToHash("VerticalSpeed");
+
+	private static readonly int GroundedHash =
+		Animator.StringToHash("Grounded");
 
 	private static readonly int AttackHash =
 		Animator.StringToHash("Attack");
@@ -43,8 +46,9 @@ public class PlayerAnimationController : MonoBehaviour
 
 	private void OnAnimationStateChanged(PlayerAnimationEvent playerAnimationEvent, PlayerAnimationStateArgs playerAnimationStateArgs)
 	{
-		animator.SetFloat(SpeedHash, playerAnimationStateArgs.speed);
-		animator.SetBool(FallingHash, playerAnimationStateArgs.isFalling);
+		animator.SetFloat(HorizontalSpeedHash, playerAnimationStateArgs.horizontalSpeed);
+		animator.SetFloat(VerticalSpeedHash, playerAnimationStateArgs.verticalSpeed);
+		animator.SetBool(GroundedHash, playerAnimationStateArgs.isGrounded);
 
 		spriteRenderer.flipX = playerAnimationStateArgs.facingLeft;
 	}
