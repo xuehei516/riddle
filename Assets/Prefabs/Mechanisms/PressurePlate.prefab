@@ -66,7 +66,7 @@ BoxCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.0042675734, y: 0}
+  m_Offset: {x: -0.006947994, y: -0.04558456}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -77,7 +77,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 4.0125484, y: 1}
+  m_Size: {x: 0.73546886, y: 0.20726848}
   m_EdgeRadius: 0
 --- !u!114 &2847199122258743518
 MonoBehaviour:
@@ -92,10 +92,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetDoor: {fileID: 0}
+  additionalDoors: []
+  pressDownDistance: 0.08
   pressDownSpriteTransform: {fileID: 7038244733784159885}
   pressDuration: 0.08
   releaseDuration: 0.12
-  pressDownDistance: 0.08
 --- !u!1 &6959299518967407200
 GameObject:
   m_ObjectHideFlags: 0
@@ -122,8 +123,8 @@ Transform:
   m_GameObject: {fileID: 6959299518967407200}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 4, y: 1, z: 1}
+  m_LocalPosition: {x: -0.0102, y: -0.0442, z: 0}
+  m_LocalScale: {x: 0.73550934, y: 0.2032579, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1418177873378017935}
@@ -170,7 +171,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 7482667652216324306, guid: cf3cf6f0bf0d84f4ea7951a8975ae397, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.9308176, g: 0.4127209, b: 0.4127209, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
