@@ -119,6 +119,9 @@ public class PlayerController : MonoBehaviour
 		isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
 		UpdateTimer();
+
+		UpdateFacingDirection();
+		PublishAnimationState();
 	}
 
 	private void FixedUpdate()
@@ -140,9 +143,6 @@ public class PlayerController : MonoBehaviour
 			coyoteTimer = 0f;
 			jumpTimer = jumpInterval;
 		}
-
-		UpdateFacingDirection();
-		PublishAnimationState();
 
 		if (GhostReplayData.IsRecording && !replayMode)
 		{
@@ -228,9 +228,15 @@ public class PlayerController : MonoBehaviour
 	{
 		float horizontalSpeed = Mathf.Abs(rigidBody2D.velocity.x);
 
-		bool isFalling = !isGrounded && rigidBody2D.velocity.y < -0.01f;
+		float verticalSpeed = rigidBody2D.velocity.y;
 
-		animationEvent.CallAnimationStateChanged(horizontalSpeed, isFalling, facingLeft);
+		// 落地后忽略物理碰撞产生的微小抖动
+		if (isGrounded || Mathf.Abs(verticalSpeed) < 0.05f)
+		{
+			verticalSpeed = 0f;
+		}
+
+		animationEvent.CallAnimationStateChanged(horizontalSpeed, verticalSpeed, isGrounded, facingLeft);
 	}
 
 	public void OnMove(InputAction.CallbackContext ctx)

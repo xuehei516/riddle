@@ -7,12 +7,13 @@ public class PlayerAnimationEvent : MonoBehaviour
 
 	public event Action<PlayerAnimationEvent> OnAttack;
 
-	public void CallAnimationStateChanged(float speed, bool isFalling, bool facingLeft)
+	public void CallAnimationStateChanged(float horizontalSpeed, float verticalSpeed, bool isGrounded, bool facingLeft)
 	{
 		OnAnimationStateChanged?.Invoke(this, new PlayerAnimationStateArgs()
 		{
-			speed = speed,
-			isFalling = isFalling,
+			horizontalSpeed = horizontalSpeed,
+			verticalSpeed = verticalSpeed,
+			isGrounded = isGrounded,
 			facingLeft = facingLeft
 		});
 	}
@@ -25,7 +26,8 @@ public class PlayerAnimationEvent : MonoBehaviour
 
 public class PlayerAnimationStateArgs : EventArgs
 {
-	public float speed;
-	public bool isFalling;
+	public float horizontalSpeed;
+	public float verticalSpeed;
+	public bool isGrounded;
 	public bool facingLeft;
 }
