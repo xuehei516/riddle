@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -44,6 +45,11 @@ public class PlayerController : MonoBehaviour
 	private bool jumpDownThisFrame;
 	/// <summary>本物理帧内"松开跳跃"的意图（用于录制）</summary>
 	private bool jumpUpThisFrame;
+	private bool interactDownThisFrame;
+
+	[Header("机关交互")]
+	[Tooltip("按 E 时搜索附近拉杆的半径")]
+	[SerializeField, Min(0f)] private float interactRadius = 1.2f;
 
 	/// <summary>影子是否已经把录制数据播完</summary>
 	public bool ReplayFinished { get; private set; }
@@ -63,6 +69,7 @@ public class PlayerController : MonoBehaviour
 		moveInput = 0f;
 		jumpDownThisFrame = false;
 		jumpUpThisFrame = false;
+		interactDownThisFrame = false;
 		jumpBufferTimer = 0f;
 		coyoteTimer = 0f;
 		jumpTimer = 0f;
@@ -89,16 +96,22 @@ public class PlayerController : MonoBehaviour
 	private float jumpBufferTimer = 0f;
 	#endregion
 
+	#region 观察者事件
+	private PlayerAnimationEvent animationEvent;
+	#endregion
+
+	private bool isGrounded;
 
 	private Rigidbody2D rigidBody2D;
 	private float moveInput;
-	private bool isGrounded;
+	private bool facingLeft;
 
-	private float platformVelocityX = 0f;
+	private float platformVelocityX;
 
 	private void Awake()
 	{
 		rigidBody2D = GetComponent<Rigidbody2D>();
+		animationEvent = GetComponent<PlayerAnimationEvent>();
 	}
 
 	private void Update()
@@ -110,35 +123,41 @@ public class PlayerController : MonoBehaviour
 
 	private void FixedUpdate()
 	{
-		// 影子：从录制数据里取输入（不读真实键盘）
 		if (replayMode)
 		{
 			ApplyReplayFrame();
 		}
+		if (interactDownThisFrame) 
+			TryPullNearbyLever();
 
-		rigidBody2D.velocity = new Vector2(moveInput * speed, rigidBody2D.velocity.y);
+		rigidBody2D.velocity = new Vector2(moveInput * speed + platformVelocityX, rigidBody2D.velocity.y);
 
 		if (jumpBufferTimer > 0f && coyoteTimer > 0f && jumpTimer <= 0f)
 		{
 			rigidBody2D.velocity = new Vector2(rigidBody2D.velocity.x, jumpForce);
+
 			jumpBufferTimer = 0f;
 			coyoteTimer = 0f;
 			jumpTimer = jumpInterval;
 		}
 
-		// 录制：把"这一物理帧的输入"存下来（影子和录制都走同一套移动代码，轨迹才会一致）
+		UpdateFacingDirection();
+		PublishAnimationState();
+
 		if (GhostReplayData.IsRecording && !replayMode)
 		{
 			GhostReplayData.Frames.Add(new InputFrame
 			{
 				move = moveInput,
 				jumpDown = jumpDownThisFrame,
-				jumpUp = jumpUpThisFrame
+				jumpUp = jumpUpThisFrame,
+				interactDown = interactDownThisFrame
 			});
 		}
 
 		jumpDownThisFrame = false;
 		jumpUpThisFrame = false;
+		interactDownThisFrame = false;
 	}
 
 	/// <summary>从录制数据里取出当前帧输入并施加（影子专用）</summary>
@@ -147,6 +166,7 @@ public class PlayerController : MonoBehaviour
 		if (replayFrames == null || replayIndex >= replayFrames.Count)
 		{
 			moveInput = 0f;
+			interactDownThisFrame = false;
 			ReplayFinished = true;
 			return;
 		}
@@ -155,11 +175,62 @@ public class PlayerController : MonoBehaviour
 		replayIndex++;
 
 		moveInput = frame.move;
+		interactDownThisFrame = frame.interactDown;
 
 		if (frame.jumpDown) jumpBufferTimer = jumpBufferTime;
 		if (frame.jumpUp) rigidBody2D.velocity = new Vector2(rigidBody2D.velocity.x, rigidBody2D.velocity.y * 0.5f);
 
 		ReplayFinished = replayIndex >= replayFrames.Count;
+	}
+
+	/// <summary>
+	/// 与附近的拉杆交互（按 E 时触发）
+	/// </summary>
+	private void TryPullNearbyLever()
+	{
+		Collider2D[] nearby = Physics2D.OverlapCircleAll(transform.position, interactRadius);
+		Lever closest = null;
+		float closestDistance = float.PositiveInfinity;
+
+		foreach (Collider2D candidate in nearby)
+		{
+			Lever lever = candidate.GetComponentInParent<Lever>();
+			if (lever == null || !lever.isActiveAndEnabled) 
+				continue;
+			float distance = (lever.transform.position - transform.position).sqrMagnitude;
+			if (distance >= closestDistance) continue;
+			closest = lever;
+			closestDistance = distance;
+		}
+		if (closest != null) 
+			closest.TryPull();
+	}
+
+	/// <summary>
+	/// 更新角色朝向（根据水平输入判断朝左还是朝右）
+	/// </summary>
+	private void UpdateFacingDirection()
+	{
+		if (moveInput > 0.01f)
+		{
+			facingLeft = false;
+		}
+		else if (moveInput < -0.01f)
+		{
+			facingLeft = true;
+		}
+	}
+
+	/// <summary>
+	/// 发布动画状态变化事件，通知 PlayerAnimationController 更新动画参数
+	/// </summary>
+	private void PublishAnimationState()
+	{
+		float horizontalSpeed = Mathf.Abs(rigidBody2D.velocity.x);
+
+		bool isFalling = !isGrounded && rigidBody2D.velocity.y < -0.01f;
+
+		animationEvent.CallAnimationStateChanged(horizontalSpeed, isFalling, facingLeft);
 	}
 
 	public void OnMove(InputAction.CallbackContext ctx)
@@ -182,6 +253,17 @@ public class PlayerController : MonoBehaviour
 		{
 			rigidBody2D.velocity = new Vector2(rigidBody2D.velocity.x, rigidBody2D.velocity.y * 0.5f);
 			jumpUpThisFrame = true;
+		}
+	}
+
+	public void OnInteract(InputAction.CallbackContext ctx)
+	{
+		if (replayMode) 
+			return; // 影子不接受输入
+
+		if (ctx.started)
+		{
+			interactDownThisFrame = true;
 		}
 	}
 

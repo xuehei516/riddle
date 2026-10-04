@@ -3,13 +3,14 @@ using UnityEngine;
 
 /// <summary>
 /// 一个物理帧（FixedUpdate）里的玩家输入快照。
-/// 只存"意图"不存坐标：move=左右值，jumpDown=本帧按下跳，jumpUp=本帧松开跳。
+/// 只存"意图"不存坐标：移动、跳跃和拉杆交互输入。
 /// </summary>
 public struct InputFrame
 {
 	public float move;
 	public bool jumpDown;
 	public bool jumpUp;
+	public bool interactDown;
 }
 
 /// <summary>

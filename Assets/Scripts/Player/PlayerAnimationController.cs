@@ -1,0 +1,56 @@
+using UnityEngine;
+
+[RequireComponent(typeof(Animator))]
+[RequireComponent(typeof(SpriteRenderer))]
+[RequireComponent(typeof(PlayerAnimationEvent))]
+public class PlayerAnimationController : MonoBehaviour
+{
+	#region 动画参数哈希
+	private static readonly int SpeedHash =
+		Animator.StringToHash("Speed");
+
+	private static readonly int FallingHash =
+		Animator.StringToHash("Falling");
+
+	private static readonly int AttackHash =
+		Animator.StringToHash("Attack");
+	#endregion
+
+	private Animator animator;
+	private SpriteRenderer spriteRenderer;
+	private PlayerAnimationEvent animationEvent;
+
+	private void Awake()
+	{
+		animator = GetComponent<Animator>();
+		spriteRenderer = GetComponent<SpriteRenderer>();
+		animationEvent = GetComponent<PlayerAnimationEvent>();
+	}
+
+	private void OnEnable()
+	{
+		animationEvent.OnAnimationStateChanged += OnAnimationStateChanged;
+
+		animationEvent.OnAttack += OnAttack;
+	}
+
+	private void OnDisable()
+	{
+		animationEvent.OnAnimationStateChanged -= OnAnimationStateChanged;
+
+		animationEvent.OnAttack -= OnAttack;
+	}
+
+	private void OnAnimationStateChanged(PlayerAnimationEvent playerAnimationEvent, PlayerAnimationStateArgs playerAnimationStateArgs)
+	{
+		animator.SetFloat(SpeedHash, playerAnimationStateArgs.speed);
+		animator.SetBool(FallingHash, playerAnimationStateArgs.isFalling);
+
+		spriteRenderer.flipX = playerAnimationStateArgs.facingLeft;
+	}
+
+	private void OnAttack(PlayerAnimationEvent playerAnimationEvent)
+	{
+		animator.SetTrigger(AttackHash);
+	}
+}
