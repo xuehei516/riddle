@@ -3,6 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 [RequireComponent(typeof(SpriteRenderer))]
 [RequireComponent(typeof(PlayerAnimationEvent))]
+[DisallowMultipleComponent]
 public class PlayerAnimationController : MonoBehaviour
 {
 	#region 动画参数哈希
@@ -21,27 +22,29 @@ public class PlayerAnimationController : MonoBehaviour
 
 	private Animator animator;
 	private SpriteRenderer spriteRenderer;
-	private PlayerAnimationEvent animationEvent;
+
+	private PlayerAnimationEvent playerAnimationEvent;
 
 	private void Awake()
 	{
+		playerAnimationEvent = GetComponent<PlayerAnimationEvent>();
+
 		animator = GetComponent<Animator>();
 		spriteRenderer = GetComponent<SpriteRenderer>();
-		animationEvent = GetComponent<PlayerAnimationEvent>();
 	}
 
-	private void OnEnable()
+	private void Start()
 	{
-		animationEvent.OnAnimationStateChanged += OnAnimationStateChanged;
+		playerAnimationEvent.OnAnimationStateChanged += OnAnimationStateChanged;
 
-		animationEvent.OnAttack += OnAttack;
+		playerAnimationEvent.OnAttack += OnAttack;
 	}
 
 	private void OnDisable()
 	{
-		animationEvent.OnAnimationStateChanged -= OnAnimationStateChanged;
+		playerAnimationEvent.OnAnimationStateChanged -= OnAnimationStateChanged;
 
-		animationEvent.OnAttack -= OnAttack;
+		playerAnimationEvent.OnAttack -= OnAttack;
 	}
 
 	private void OnAnimationStateChanged(PlayerAnimationEvent playerAnimationEvent, PlayerAnimationStateArgs playerAnimationStateArgs)

@@ -96,10 +96,6 @@ public class PlayerController : MonoBehaviour
 	private float jumpBufferTimer = 0f;
 	#endregion
 
-	#region 观察者事件
-	private PlayerAnimationEvent animationEvent;
-	#endregion
-
 	private bool isGrounded;
 
 	private Rigidbody2D rigidBody2D;
@@ -108,10 +104,14 @@ public class PlayerController : MonoBehaviour
 
 	private float platformVelocityX;
 
+	private MovingPlatform currentPlatform;
+
+	private Player player;
+
 	private void Awake()
 	{
 		rigidBody2D = GetComponent<Rigidbody2D>();
-		animationEvent = GetComponent<PlayerAnimationEvent>();
+		player = GetComponent<Player>();
 	}
 
 	private void Update()
@@ -122,6 +122,9 @@ public class PlayerController : MonoBehaviour
 
 		UpdateFacingDirection();
 		PublishAnimationState();
+
+		if (interactDownThisFrame)
+			TryPullNearbyLever();
 	}
 
 	private void FixedUpdate()
@@ -130,13 +133,19 @@ public class PlayerController : MonoBehaviour
 		{
 			ApplyReplayFrame();
 		}
-		if (interactDownThisFrame) 
-			TryPullNearbyLever();
 
+		// 如果踩在移动平台上，水平速度要叠加平台的速度
 		rigidBody2D.velocity = new Vector2(moveInput * speed + platformVelocityX, rigidBody2D.velocity.y);
 
+		// 如果在土狼时间内按下了跳跃键，并且跳跃间隔已过，则执行跳跃
 		if (jumpBufferTimer > 0f && coyoteTimer > 0f && jumpTimer <= 0f)
 		{
+			// 如果当前踩在可崩塌平台上，通知平台玩家跳跃了
+			if (currentPlatform is CrumblePlatform crumblePlatform)
+			{
+				crumblePlatform.NotifyPlayerJump();
+			}
+
 			rigidBody2D.velocity = new Vector2(rigidBody2D.velocity.x, jumpForce);
 
 			jumpBufferTimer = 0f;
@@ -226,7 +235,7 @@ public class PlayerController : MonoBehaviour
 	/// </summary>
 	private void PublishAnimationState()
 	{
-		float horizontalSpeed = Mathf.Abs(rigidBody2D.velocity.x);
+		float horizontalSpeed = Mathf.Abs(rigidBody2D.velocity.x - platformVelocityX);
 
 		float verticalSpeed = rigidBody2D.velocity.y;
 
@@ -236,7 +245,7 @@ public class PlayerController : MonoBehaviour
 			verticalSpeed = 0f;
 		}
 
-		animationEvent.CallAnimationStateChanged(horizontalSpeed, verticalSpeed, isGrounded, facingLeft);
+		player.playerAnimationEvent.CallAnimationStateChanged(horizontalSpeed, verticalSpeed, isGrounded, facingLeft);
 	}
 
 	public void OnMove(InputAction.CallbackContext ctx)
@@ -302,6 +311,7 @@ public class PlayerController : MonoBehaviour
 			// 判断接触面朝上（确保角色是踩在平台顶部，而不是顶到底部或侧面）
 			if (collision.contacts.Length > 0 && collision.contacts[0].normal.y > 0.5f)
 			{
+				currentPlatform = platform;
 				platformVelocityX = platform.VelocityX;
 				return;
 			}
@@ -311,8 +321,9 @@ public class PlayerController : MonoBehaviour
 
 	private void OnCollisionExit2D(Collision2D collision)
 	{
-		if (collision.gameObject.GetComponent<MovingPlatform>() != null)
+		if (collision.gameObject.GetComponent<MovingPlatform>() == currentPlatform)
 		{
+			currentPlatform = null;
 			platformVelocityX = 0f;
 		}
 	}
