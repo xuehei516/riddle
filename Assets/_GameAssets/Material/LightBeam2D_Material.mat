@@ -36,5 +36,5 @@ Material:
     - _StreakStrength: 0.3
     - _TailSoftness: 0.15
     m_Colors:
-    - _Color: {r: 1, g: 0.95, b: 0.7, a: 0.8}
+    - _Color: {r: 1.4708991, g: 1.5148065, b: 0.80496967, a: 0.8235294}
   m_BuildTextureStacks: []

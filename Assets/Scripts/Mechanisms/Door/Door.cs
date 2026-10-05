@@ -40,7 +40,13 @@ public class Door : MonoBehaviour
 	/// </summary>
 	private Vector2 openPosition;
 
+	/// <summary>
+	/// 活跃的信号源集合
+	/// </summary>
 	private readonly HashSet<SignalSource> activeSources = new HashSet<SignalSource>();
+	/// <summary>
+	/// 已收到信号的信号源集合
+	/// </summary>
 	private readonly HashSet<SignalSource> receivedSources = new HashSet<SignalSource>();
 	private bool isOpen;
 	private float closeAtTime = -1f;
@@ -63,7 +69,7 @@ public class Door : MonoBehaviour
 	}
 
 	/// <summary>
-	/// 同一个信号源重复通知不会被算作多个输入
+	/// 设置信号源的状态，门会根据当前模式和信号源的状态来决定是否开门，active为true表示信号源激活，false表示信号源失效
 	/// </summary>
 	public void SetSignal(SignalSource source, bool active)
 	{
@@ -103,6 +109,10 @@ public class Door : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// 设置门的开关状态，如果当前状态与目标状态相同则不做任何操作
+	/// </summary>
+	/// <param name="open"></param>
 	public void SetDoorOpen(bool open)
 	{
 		if (isOpen == open) 

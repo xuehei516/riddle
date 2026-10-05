@@ -193,25 +193,32 @@ public class PlayerController : MonoBehaviour
 	}
 
 	/// <summary>
-	/// 与附近的拉杆交互（按 E 时触发）
+	/// 与附近的拉杆交互
 	/// </summary>
 	private void TryPullNearbyLever()
 	{
+		// 在角色周围指定半径内搜索所有碰撞体
 		Collider2D[] nearby = Physics2D.OverlapCircleAll(transform.position, interactRadius);
 		Lever closest = null;
-		float closestDistance = float.PositiveInfinity;
+		float closestDistance = float.PositiveInfinity; // 初始为无穷大值
 
 		foreach (Collider2D candidate in nearby)
 		{
+			// 过滤掉不是拉杆的碰撞体
 			Lever lever = candidate.GetComponentInParent<Lever>();
 			if (lever == null || !lever.isActiveAndEnabled) 
 				continue;
+
 			float distance = (lever.transform.position - transform.position).sqrMagnitude;
-			if (distance >= closestDistance) continue;
+			if (distance >= closestDistance)
+				continue;
+
+			// 找到最近的拉杆
 			closest = lever;
 			closestDistance = distance;
 		}
-		if (closest != null) 
+
+		if (closest != null)
 			closest.TryPull();
 	}
 

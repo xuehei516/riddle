@@ -75,7 +75,7 @@ public class RespawnPoint : MonoBehaviour
 	}
 
 	// 玩家死亡 → 等 respawnDelay 秒再复活
-	private void HandlePlayerDeath()
+	private void HandlePlayerDeath(DestroyedEvent destroyedEvent, DestroyedEventArgs destroyedEventArgs)
 	{
 		if (IsActivated) Invoke(nameof(RespawnNow), respawnDelay);
 	}
