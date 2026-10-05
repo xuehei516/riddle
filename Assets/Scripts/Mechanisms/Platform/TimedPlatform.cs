@@ -27,15 +27,6 @@ public class TimedPlatform : MovingPlatform
 	[SerializeField] private SpriteRenderer spriteRenderer;
 
 	private bool isRunning;
-	private Vector3 warningOrigin;
-
-	protected override void Awake()
-	{
-		base.Awake();
-
-		warningOrigin = transform.localPosition;
-	}
-
 	private void Start()
 	{
 		if (activationMode == ActivationMode.Periodic)

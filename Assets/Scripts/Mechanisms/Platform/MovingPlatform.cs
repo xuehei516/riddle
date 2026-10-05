@@ -11,14 +11,20 @@ public class MovingPlatform : MonoBehaviour
 	[Header("移动速度")]
 	[SerializeField] protected float speed = 2f;
 
+	[Header("信号设置")]
+	[SerializeField] private bool requireSignal;
+
+	private readonly HashSet<SignalSource> activeSources = new HashSet<SignalSource>();
+
 	protected Rigidbody2D rigidBody2D;
 	protected Transform targetPoint;
 
 	public float VelocityX { get; protected set; }
+
 	/// <summary>
 	/// 平台是否能移动
 	/// </summary>
-	protected bool IsMoving => startPoint != null && endPoint != null && speed > 0f;
+	protected bool IsMoving => startPoint != null && endPoint != null && speed > 0f && (!requireSignal || activeSources.Count > 0);
 
 	protected virtual void Awake()
 	{
@@ -49,5 +55,21 @@ public class MovingPlatform : MonoBehaviour
 			else
 				targetPoint = endPoint;
 		}
+	}
+
+	/// <summary>
+	/// 设置信号源的激活状态
+	/// </summary>
+	/// <param name="source">信号源</param>
+	/// <param name="active">是否激活</param>
+	public void SetSignal(SignalSource source, bool active)
+	{
+		if (source == null) 
+			return;
+
+		if (active)
+			activeSources.Add(source);
+		else
+			activeSources.Remove(source);
 	}
 }
