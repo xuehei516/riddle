@@ -52,6 +52,10 @@ public class PressurePlate : SignalSource
 		}
 	}
 
+	/// <summary>
+	/// 离开压力板时，移除该物体并检查是否需要回弹
+	/// </summary>
+	/// <param name="collision"></param>
 	private void OnTriggerExit2D(Collider2D collision)
 	{
 		if (occupants.Remove(collision))

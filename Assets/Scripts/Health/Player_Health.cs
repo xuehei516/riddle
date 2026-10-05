@@ -45,7 +45,7 @@ public class Player_Health : MonoBehaviour
 		if (CurrentHealth <= 0) 
 		{
 			IsDead = true;
-			player.destroyedEvent.CallPlayerDeathEvent();
+			player.destroyedEvent.CallPlayerDeathEvent(player.isInLightZone);
 		}
 	}
 
