@@ -44,10 +44,15 @@ GameObject:
   - component: {fileID: 2603607715293374803}
   - component: {fileID: 3266908598035247656}
   - component: {fileID: 5426931018890888607}
+  - component: {fileID: 6142674542210514084}
   - component: {fileID: 1889206657350230581}
   - component: {fileID: 7222564410819005714}
   - component: {fileID: 7817406991475485642}
   - component: {fileID: 254759527622480268}
+  - component: {fileID: 1351692724048272696}
+  - component: {fileID: 1317012637642887101}
+  - component: {fileID: 4902900194229675922}
+  - component: {fileID: 5952695584565444659}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -267,6 +272,26 @@ MonoBehaviour:
   m_DefaultActionMap: Player Normal
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &6142674542210514084
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8170116670161094628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a5a1ff8c261863489f2639e5509f942, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerController: {fileID: 0}
+  playerHealth: {fileID: 0}
+  playerAnimationController: {fileID: 0}
+  destroyed: {fileID: 0}
+  destroyedEvent: {fileID: 0}
+  playerAnimationEvent: {fileID: 0}
+  isInLightZone: 0
+  currentLightSource: {fileID: 0}
 --- !u!114 &1889206657350230581
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -279,9 +304,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1815d9edc4fd94b4eba16d8bd2b6c22a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 5
-  jumpForce: 10
-  jumpInterval: 1
+  speed: 4
+  jumpForce: 8
+  jumpInterval: 0
   coyoteTime: 0.12
   jumpBufferTime: 0.12
   groundCheck: {fileID: 186986299998327314}
@@ -336,3 +361,52 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1351692724048272696
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8170116670161094628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6017fe310bcd1c429a9d141d8d137e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1317012637642887101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8170116670161094628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcf0fbdd49ce15f4684e1f8ae8de3865, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
+--- !u!114 &4902900194229675922
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8170116670161094628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f914b3aefe10484581764eb30b89b71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5952695584565444659
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8170116670161094628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f1f6712b2547cb4e988c5255df03779, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

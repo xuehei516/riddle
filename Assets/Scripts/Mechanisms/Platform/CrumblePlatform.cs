@@ -26,15 +26,6 @@ public class CrumblePlatform : MovingPlatform
 
 	private bool isCrumbling;
 
-	private Vector3 warningOrigin;
-
-	protected override void Awake()
-	{
-		base.Awake();
-
-		warningOrigin = transform.localPosition;
-	}
-
 	protected override void FixedUpdate()
 	{
 		base.FixedUpdate();
@@ -50,17 +41,6 @@ public class CrumblePlatform : MovingPlatform
 		{
 			BeginCrumble();
 		}
-	}
-
-	private void OnCollisionStay2D(Collision2D collision)
-	{
-		if (triggerMode != TriggerMode.OnJump || isCrumbling || !IsPlayerOrGhost(collision) ||
-			collision.contacts.Length == 0 || collision.contacts[0].normal.y >= -0.5f)
-			return;
-
-		Rigidbody2D body = collision.rigidbody;
-		if (body != null && body.velocity.y > 8f)
-			BeginCrumble();
 	}
 
 	private bool IsPlayerOrGhost(Collision2D collision)
@@ -107,5 +87,16 @@ public class CrumblePlatform : MovingPlatform
 				spriteRenderer.enabled = true;
 			isCrumbling = false;
 		}
+	}
+
+	/// <summary>
+	/// 玩家跳跃时的通知方法
+	/// </summary>
+	public void NotifyPlayerJump()
+	{
+		if (triggerMode != TriggerMode.OnJump || isCrumbling)
+			return;
+
+		BeginCrumble();
 	}
 }
