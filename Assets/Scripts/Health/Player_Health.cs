@@ -62,5 +62,16 @@ public class Player_Health : MonoBehaviour
 		healthEvent.CallHealthChangedEvent(CurrentHealth, 0);
 	}
 
+	/// <summary>
+	/// 复活：清掉死亡标记并把血量回满（由复活点调用）
+	/// </summary>
+	public void Revive()
+	{
+		IsDead = false;
+		CurrentHealth = maxHealth;
+
+		healthEvent.CallHealthChangedEvent(CurrentHealth, 0);
+	}
+
 
 }
