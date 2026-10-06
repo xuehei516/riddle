@@ -58,11 +58,11 @@ public class MovingPlatform : MonoBehaviour
 	}
 
 	/// <summary>
-	/// 设置信号源的激活状态
+	/// 设置信号源的激活状态（信号源是通过基类字段调用过来的，子类可以 override 来记自己的状态）
 	/// </summary>
 	/// <param name="source">信号源</param>
 	/// <param name="active">是否激活</param>
-	public void SetSignal(SignalSource source, bool active)
+	public virtual void SetSignal(SignalSource source, bool active)
 	{
 		if (source == null) 
 			return;

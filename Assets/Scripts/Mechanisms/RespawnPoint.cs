@@ -18,6 +18,7 @@ public class RespawnPoint : MonoBehaviour
 
 	public static RespawnPoint ActivePoint { get; private set; }                           // 当前生效的复活点
 	public static event System.Action<RespawnPoint> OnPointActivated, OnPointDeactivated; // 代码订阅用
+	public static event System.Action<RespawnPoint> OnPlayerRespawned;                    // 复活完成（玩家已回到场上）
 	public bool IsActivated => ActivePoint == this;
 	public Vector3 RespawnPosition => transform.position + (Vector3)respawnOffset;
 	private Player_Health playerHealth;      // 当前订阅了死亡事件的玩家
@@ -93,6 +94,7 @@ public class RespawnPoint : MonoBehaviour
 		player.transform.position = RespawnPosition;
 		Rigidbody2D body = player.GetComponent<Rigidbody2D>();
 		if (body != null) { body.velocity = Vector2.zero; body.position = RespawnPosition; } // 刚体要用 position 才立刻同步
+		OnPlayerRespawned?.Invoke(this);
 		if (onRespawned != null) onRespawned.Invoke();
 	}
 }
