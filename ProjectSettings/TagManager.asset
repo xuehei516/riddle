@@ -54,3 +54,9 @@ TagManager:
   - name: TIN
     uniqueID: 4172570359
     locked: 0
+  - name: Mechanism
+    uniqueID: 2134985379
+    locked: 0
+  - name: Player
+    uniqueID: 3079061373
+    locked: 0
