@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class DamageTrigger : MonoBehaviour
 {
-    [SerializeField]protected int damageAmount = 10;
+    [SerializeField]protected int damageAmount = 100;
     private void OnTriggerEnter2D(Collider2D collision)
     {
         Player_Health playerHealth = collision.GetComponent<Player_Health>();

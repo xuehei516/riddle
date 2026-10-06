@@ -101,6 +101,8 @@ MonoBehaviour:
   respawnOffset: {x: 0, y: 0.5}
   respawnDelay: 0.3
   restorePlayerOnRespawn: 1
+  activatedSprite: {fileID: -348538776, guid: 991f4fac05a5aa84e9c8eaa8ed6332ab, type: 3}
+  inactiveSprite: {fileID: 1690161362, guid: 991f4fac05a5aa84e9c8eaa8ed6332ab, type: 3}
   onActivated:
     m_PersistentCalls:
       m_Calls: []
@@ -139,7 +141,7 @@ BoxCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.012105942, y: -0.029054523}
+  m_Offset: {x: 0.0037994385, y: -0.20401216}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.48774463, y: 0.50156385}
@@ -150,5 +152,5 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.70461273, y: 0.94189095}
+  m_Size: {x: 0.672802, y: 1.3695655}
   m_EdgeRadius: 0

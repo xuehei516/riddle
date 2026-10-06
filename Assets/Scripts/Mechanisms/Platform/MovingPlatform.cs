@@ -72,4 +72,13 @@ public class MovingPlatform : MonoBehaviour
 		else
 			activeSources.Remove(source);
 	}
+
+	/// <summary>
+	/// 把平台复位成「完好的初始状态」。
+	/// 自己管着可见性 / 碰撞体开关的子类（易碎平台、限时平台）要 override：
+	/// 外面的开关（比如拉杆）重新启用平台时会调它，否则平台可能一直卡在「已粉碎 / 已消失」的状态里。
+	/// </summary>
+	public virtual void ResetPlatform()
+	{
+	}
 }
