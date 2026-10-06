@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 /// <summary>
 /// 限时平台
@@ -25,8 +26,9 @@ public class TimedPlatform : MovingPlatform
 	[Header("组件引用")]
 	[SerializeField] private Collider2D platformCollider;
 	[SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private TilemapRenderer tilemapRenderer;
 
-	private bool isRunning;
+    private bool isRunning;
 	private void Start()
 	{
 		if (activationMode == ActivationMode.Periodic)
@@ -80,8 +82,10 @@ public class TimedPlatform : MovingPlatform
 			platformCollider.enabled = false;
 		if (spriteRenderer != null)
 			spriteRenderer.enabled = false;
+		if (tilemapRenderer != null)
+			tilemapRenderer.enabled = false;
 
-		if (respawnTime > 0f)
+        if (respawnTime > 0f)
 		{
 			yield return new WaitForSeconds(respawnTime);
 
@@ -89,8 +93,10 @@ public class TimedPlatform : MovingPlatform
 				platformCollider.enabled = true;
 			if (spriteRenderer != null)
 				spriteRenderer.enabled = true;
+			if (tilemapRenderer != null)
+				tilemapRenderer.enabled = true;
 
-			isRunning = false;
+                isRunning = false;
 
 			if (activationMode == ActivationMode.Periodic)
 			{

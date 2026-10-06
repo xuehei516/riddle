@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class CrumblePlatform : MovingPlatform
@@ -23,8 +24,9 @@ public class CrumblePlatform : MovingPlatform
 	[Header("组件引用")]
 	[SerializeField] private Collider2D platformCollider;
 	[SerializeField] private SpriteRenderer spriteRenderer;
+	[SerializeField] private TilemapRenderer tilemapRenderer;
 
-	private bool isCrumbling;
+    private bool isCrumbling;
 
 	protected override void FixedUpdate()
 	{
@@ -82,8 +84,11 @@ public class CrumblePlatform : MovingPlatform
 		if (spriteRenderer != null)
 			spriteRenderer.enabled = false;
 
-		// 如果设置了重新生成时间，则等待一段时间后重新启用碰撞器和渲染器
-		if (respawnTime > 0f)
+		if (tilemapRenderer != null)
+			tilemapRenderer.enabled = false;
+
+        // 如果设置了重新生成时间，则等待一段时间后重新启用碰撞器和渲染器
+        if (respawnTime > 0f)
 		{
 			yield return new WaitForSeconds(respawnTime);
 
@@ -91,7 +96,9 @@ public class CrumblePlatform : MovingPlatform
 				platformCollider.enabled = true;
 			if (spriteRenderer != null)
 				spriteRenderer.enabled = true;
-			isCrumbling = false;
+			if (tilemapRenderer != null)
+				tilemapRenderer.enabled = true;
+            isCrumbling = false;
 		}
 	}
 
