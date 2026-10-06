@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
+using UnityEngine.UI;
 
 /// <summary>
 /// 时间回溯（幽灵回放）主控制器。
@@ -39,10 +40,12 @@ public class GhostReplaySystem : MonoBehaviour
 	[SerializeField] private Color ghostColor = new Color(0.6f, 0.8f, 1f, 0.5f);
 	[Tooltip("渲染层级偏移，-1 表示压在玩家身后")]
 	[SerializeField] private int sortingOffset = -1;
+	[Tooltip("影子所在的 Layer。必须是 Ghost 层：Player 层与 Player 层在物理矩阵里是互不碰撞的，留在 Player 层影子永远碰不到玩家")]
+	[SerializeField] private string ghostLayerName = "Ghost";
 
 	[Header("影子行为")]
-	[Tooltip("影子是否与玩家碰撞（默认关闭，防止互相推挤导致轨迹漂移）")]
-	[SerializeField] private bool ghostCollidesWithPlayer = false;
+	[Tooltip("影子是否与玩家碰撞。开启后影子会真的挡住玩家（代价：互相推挤可能把回放轨迹挤歪）")]
+	[SerializeField] private bool ghostCollidesWithPlayer = true;
 	[Tooltip("回放结束后销毁影子（默认留在原地待机）")]
 	[SerializeField] private bool destroyGhostAfterReplay = false;
 
@@ -52,8 +55,15 @@ public class GhostReplaySystem : MonoBehaviour
 
 	private State state = State.Idle;
 	private float recordTimer;
+	private float replayTimer;
 	private GameObject ghost;
 	private GUIStyle hudStyle;
+
+	/// <summary>硬编码的进度条路径：角色 → Canvas → Slider（按需求写死，不开 Inspector 接口）</summary>
+	private const string ProgressSliderPath = "Canvas/Slider";
+
+	private Slider progressSlider;
+	private bool warnedMissingSlider;
 
 	/// <summary>当前状态，方便在 Inspector 或调试时查看</summary>
 	public State CurrentState => state;
@@ -112,10 +122,19 @@ public class GhostReplaySystem : MonoBehaviour
 				else CheckReplayFinished();
 				break;
 		}
+
+		UpdateSlider();
 	}
 
 	private void FixedUpdate()
 	{
+		// 回放中：按物理帧累加，与影子推进的节奏一致，滑动条才不会偏
+		if (state == State.Replaying)
+		{
+			replayTimer += Time.fixedDeltaTime;
+			return;
+		}
+
 		if (state != State.Recording) return;
 
 		recordTimer += Time.fixedDeltaTime;
@@ -193,6 +212,7 @@ public class GhostReplaySystem : MonoBehaviour
 		// 不重载场景 → 必须手动清掉上一轮的影子，否则每按一次 R 就多一个
 		ClearGhost();
 
+		replayTimer = 0f; // 回放计时归零，滑动条从「本段录制时长」开始倒转
 		SpawnGhost();
 
 		if (ghost != null) state = State.Replaying;
@@ -241,6 +261,15 @@ public class GhostReplaySystem : MonoBehaviour
 		ghost.name = "Ghost";
 		ghost.tag = "Untagged"; // 防止之后 FindWithTag("Player") 找到影子而不是玩家
 
+		// 换到 Ghost 层。克隆来的层是 Player，而物理矩阵里 Player×Player 是关闭的——
+		// 留在 Player 层的话影子永远不可能和玩家发生物理接触，下面的开关也就成了死开关。
+		ApplyGhostLayer();
+
+		// 影子是整份克隆玩家的，会把角色身上的 Canvas/Slider 也复制一份。
+		// 而 Canvas 是 Screen Space-Overlay，克隆体会和真条完全重叠 ——
+		// 看起来就是"原来的滑动头卡住不动，又冒出一个新滑动头往回走"。
+		DisableCloneUI();
+
 		// 影子不读真实键盘输入
 		PlayerInput playerInput = ghost.GetComponent<PlayerInput>();
 		if (playerInput != null) playerInput.enabled = false;
@@ -282,10 +311,136 @@ public class GhostReplaySystem : MonoBehaviour
 		ghost = null;
 	}
 
+	/// <summary>
+	/// 把影子整体换到 ghostLayerName 指定的层（含子物体）。
+	/// 找不到该层时保持克隆来的 Player 层并警告——那样影子将无法与玩家发生物理接触。
+	/// </summary>
+	private void ApplyGhostLayer()
+	{
+		if (string.IsNullOrEmpty(ghostLayerName)) return;
+
+		int layer = LayerMask.NameToLayer(ghostLayerName);
+		if (layer < 0)
+		{
+			Debug.LogWarning($"[幽灵回放] 工程里没有名为「{ghostLayerName}」的 Layer，影子仍留在 Player 层。" +
+			                 "Player×Player 在 2D 物理矩阵里是互不碰撞的，影子将碰不到玩家。");
+			return;
+		}
+
+		SetLayerRecursively(ghost, layer);
+	}
+
+	/// <summary>把整棵子物体树都换到指定层</summary>
+	private static void SetLayerRecursively(GameObject target, int layer)
+	{
+		target.layer = layer;
+
+		foreach (Transform child in target.transform)
+		{
+			SetLayerRecursively(child.gameObject, layer);
+		}
+	}
+
+	/// <summary>
+	/// 关掉克隆体里的 UI（Canvas / Slider）。
+	/// 只翻组件开关，不删对象、不碰任何 Transform，也不去控制滑动头——
+	/// 影子从此不带进度条，屏幕上只保留玩家那一条。
+	/// </summary>
+	private void DisableCloneUI()
+	{
+		if (ghost == null) return;
+
+		foreach (Canvas canvas in ghost.GetComponentsInChildren<Canvas>(true))
+		{
+			canvas.enabled = false;
+		}
+
+		foreach (Slider slider in ghost.GetComponentsInChildren<Slider>(true))
+		{
+			slider.enabled = false;
+		}
+	}
+
 	private Transform FindPlayer()
 	{
 		GameObject player = GameObject.FindGameObjectWithTag("Player");
 		return player != null ? player.transform : null;
+	}
+	#endregion
+
+	#region 滑动条（硬编码，无 Inspector 接口）
+	/// <summary>
+	/// 取角色身上那个叫 Slider 的进度条：路径写死为 Player/Canvas/Slider。
+	/// 找不到时兜底扫一遍角色层级里名为 "Slider" 的对象；再找不到只警告一次。
+	/// </summary>
+	private Slider ResolveProgressSlider()
+	{
+		if (progressSlider != null) return progressSlider;
+
+		Transform player = FindPlayer();
+		if (player == null) return null;
+
+		Transform target = player.Find(ProgressSliderPath);
+
+		if (target == null)
+		{
+			foreach (Slider candidate in player.GetComponentsInChildren<Slider>(true))
+			{
+				if (candidate.name == "Slider")
+				{
+					target = candidate.transform;
+					break;
+				}
+			}
+		}
+
+		if (target != null)
+		{
+			progressSlider = target.GetComponent<Slider>();
+		}
+
+		if (progressSlider == null && !warnedMissingSlider)
+		{
+			warnedMissingSlider = true;
+			Debug.LogWarning($"[幽灵回放] 角色身上找不到 {ProgressSliderPath} 的 Slider，进度条不会更新");
+		}
+
+		return progressSlider;
+	}
+
+	/// <summary>
+	/// 滑动条同步：
+	/// 上限恒定 = 最大录制时间；
+	/// 待机 = 0，录制中 = 已录制时间（往上涨），就绪 = 本段总时长，
+	/// 回放中 = 从「本段总时长」倒着减到 0。
+	/// </summary>
+	private void UpdateSlider()
+	{
+		Slider slider = ResolveProgressSlider();
+		if (slider == null) return;
+
+		slider.maxValue = recordDuration; // 上限 = 最大录制时间
+
+		float recordedLength = GhostReplayData.Frames.Count * Time.fixedDeltaTime;
+
+		switch (state)
+		{
+			case State.Idle:
+				slider.value = 0f;
+				break;
+
+			case State.Recording:
+				slider.value = recordTimer; // 已经录制的时间
+				break;
+
+			case State.Ready:
+				slider.value = recordedLength;
+				break;
+
+			case State.Replaying:
+				slider.value = Mathf.Max(0f, recordedLength - replayTimer); // 倒转
+				break;
+		}
 	}
 	#endregion
 
