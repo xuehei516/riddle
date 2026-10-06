@@ -26,15 +26,23 @@ public class CutsceneAutoHandle : MonoBehaviour
 	[Tooltip("到达井口后保持静止的时间")]
 	[SerializeField] private float jumpFallDuration = 2f;
 
+	[Header("跳跃 QTE")]
+	[Tooltip("到达 jumpTargetPoint 后是否等待玩家按空格")]
+	[SerializeField] private bool requireJumpInput = true;
+
+	[Tooltip("等待空格时显示的提示物体")]
+	[SerializeField] private GameObject jumpPrompt;
+
 	private float stoppingDistance = 0.05f;
 
 	private Rigidbody2D rb;
 	private PlayerInput playerInput;
 	private PlayerController playerController;
 	private Player player;
-	private float lastMovementDirection = 1f;
+	private bool waitingForJumpInput;
 
 	public bool isAutoHandling = false;
+	public bool IsWaitingForJumpInput => waitingForJumpInput;
 
 	private void Awake()
 	{
@@ -43,6 +51,7 @@ public class CutsceneAutoHandle : MonoBehaviour
 		playerController = GetComponent<PlayerController>();
 
 		player = GetComponent<Player>();
+		SetJumpPromptVisible(false);
 	}
 
 	private void Start()
@@ -80,7 +89,6 @@ public class CutsceneAutoHandle : MonoBehaviour
 					break;
 
 				direction = Mathf.Sign(deltaX);
-				lastMovementDirection = direction;
 				// 最后一小段减速，避免高速移动越过目标点后反复来回。
 				float maxDistanceThisStep = walkSpeed * Time.fixedDeltaTime;
 				if (Mathf.Abs(deltaX) < maxDistanceThisStep)
@@ -123,7 +131,11 @@ public class CutsceneAutoHandle : MonoBehaviour
 		{
 			yield return MoveToPoint(jumpTargetPoint);
 
-			// 到达井边后原地向上跳，水平速度强制为 0。
+			// 到达边缘后先停住，等待玩家确认。原来的自动跳跃逻辑保留在确认之后。
+			if (requireJumpInput)
+				yield return WaitForJumpInput();
+
+			// 确认后向前起跳，沿用原有的物理跳跃和下落动画。
 			float launchSpeed = CalculateJumpSpeed(jumpTargetPoint);
 			// 起跳方向以角色当前朝向为准：flipX=true 表示向左，false 表示向右。
 			float jumpDirection = player != null && player.spriteRenderer != null && player.spriteRenderer.flipX
@@ -136,7 +148,7 @@ public class CutsceneAutoHandle : MonoBehaviour
 			else
 				rb.velocity = new Vector2(jumpDirection * jumpForwardSpeed, launchSpeed);
 
-			// 等待真实物理运动到达最高点，再把水平和垂直速度锁为 0。
+			// 等待真实物理运动到达最高点，再把水平和垂直速度锁为 0
 			yield return WaitForJumpDescent();
 
 			yield return new WaitForSeconds(jumpFallDuration);
@@ -152,7 +164,44 @@ public class CutsceneAutoHandle : MonoBehaviour
 		if (playerInput != null)
 			playerInput.ActivateInput();
 
+		GameTimer.Instance.StartTimer();
+
 		Debug.Log("自动行走结束");
+	}
+
+	private IEnumerator WaitForJumpInput()
+	{
+		waitingForJumpInput = true;
+		SetJumpPromptVisible(true);
+
+		// 确保角色停在边缘，不让 PlayerController 的固定更新继续推动角色。
+		if (playerController != null)
+			playerController.SetCutsceneHorizontalSpeed(0f);
+		else if (rb != null)
+			rb.velocity = new Vector2(0f, rb.velocity.y);
+
+		// 提示出现前按住的空格不算确认，需要松开后重新按下。
+		yield return null;
+		while (Keyboard.current != null && Keyboard.current.spaceKey.isPressed)
+			yield return null;
+
+		while (!WasJumpConfirmPressed())
+			yield return null;
+
+		waitingForJumpInput = false;
+		SetJumpPromptVisible(false);
+	}
+
+	private bool WasJumpConfirmPressed()
+	{
+		// 项目已经使用 Input System；这里直接读取空格，避免等待期间重新启用整套移动输入。
+		return Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
+	}
+
+	private void SetJumpPromptVisible(bool visible)
+	{
+		if (jumpPrompt != null)
+			jumpPrompt.SetActive(visible);
 	}
 
 	/// <summary>
@@ -175,7 +224,7 @@ public class CutsceneAutoHandle : MonoBehaviour
 			float deltaX = destination.position.x - transform.position.x;
 			float direction = Mathf.Sign(deltaX);
 			float currentSpeed = walkSpeed;
-			lastMovementDirection = direction;
+
 			if (playerController != null)
 				playerController.SetFacingDirection(direction < 0f);
 			else if (player != null && player.spriteRenderer != null)
