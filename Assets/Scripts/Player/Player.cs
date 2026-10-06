@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 #region 需要的组件
+[RequireComponent(typeof(SpriteRenderer))]
 [RequireComponent(typeof(PlayerInput))]
 [RequireComponent(typeof(PlayerController))]
 [RequireComponent(typeof(HealthEvent))]
@@ -20,6 +21,7 @@ public class Player : MonoBehaviour
 	[HideInInspector] public Player_Health playerHealth;
 	[HideInInspector] public PlayerAnimationController playerAnimationController;
 	[HideInInspector] public Destroyed destroyed;
+	[HideInInspector] public SpriteRenderer spriteRenderer;
 	#endregion
 
 	#region 要用的事件
@@ -42,6 +44,7 @@ public class Player : MonoBehaviour
 		playerHealth = GetComponent<Player_Health>();
 		playerAnimationController = GetComponent<PlayerAnimationController>();
 		destroyed = GetComponent<Destroyed>();
+		spriteRenderer = GetComponent<SpriteRenderer>();
 
 		playerAnimationEvent = GetComponent<PlayerAnimationEvent>();
 		destroyedEvent = GetComponent<DestroyedEvent>();

@@ -103,6 +103,8 @@ public class PlayerController : MonoBehaviour
 	private bool facingLeft;
 
 	private float platformVelocityX;
+	private bool cutsceneMovementActive;
+	private float cutsceneHorizontalSpeed;
 
 	private MovingPlatform currentPlatform;
 
@@ -135,7 +137,10 @@ public class PlayerController : MonoBehaviour
 		}
 
 		// 如果踩在移动平台上，水平速度要叠加平台的速度
-		rigidBody2D.velocity = new Vector2(moveInput * speed + platformVelocityX, rigidBody2D.velocity.y);
+		float horizontalVelocity = cutsceneMovementActive
+			? cutsceneHorizontalSpeed
+			: moveInput * speed + platformVelocityX;
+		rigidBody2D.velocity = new Vector2(horizontalVelocity, rigidBody2D.velocity.y);
 
 		// 如果在土狼时间内按下了跳跃键，并且跳跃间隔已过，则执行跳跃
 		if (jumpBufferTimer > 0f && coyoteTimer > 0f && jumpTimer <= 0f)
@@ -287,6 +292,60 @@ public class PlayerController : MonoBehaviour
 		{
 			interactDownThisFrame = true;
 		}
+	}
+
+	/// <summary>
+	/// 由过场控制器调用，临时接管角色的水平移动。
+	/// </summary>
+	public void BeginCutsceneMovement(float horizontalSpeed)
+	{
+		cutsceneMovementActive = true;
+		cutsceneHorizontalSpeed = horizontalSpeed;
+	}
+
+	/// <summary>
+	/// 结束过场移动并恢复普通输入控制。
+	/// </summary>
+	public void EndCutsceneMovement()
+	{
+		cutsceneMovementActive = false;
+		cutsceneHorizontalSpeed = 0f;
+		moveInput = 0f;
+		rigidBody2D.velocity = new Vector2(0f, rigidBody2D.velocity.y);
+	}
+
+	/// <summary>
+	/// 强制设置角色朝向，并立即同步到动画系统。
+	/// 过场或剧情动作中使用，避免直接改 SpriteRenderer 后被动画系统覆盖。
+	/// </summary>
+	public void SetFacingDirection(bool faceLeft)
+	{
+		facingLeft = faceLeft;
+		PublishAnimationState();
+	}
+
+	/// <summary>
+	/// 过场中原地起跳，水平速度保持为 0，之后由物理重力完成下落。
+	/// </summary>
+	public void BeginCutsceneJump(float horizontalSpeed, float upwardSpeed)
+	{
+		cutsceneMovementActive = true;
+		cutsceneHorizontalSpeed = horizontalSpeed;
+		moveInput = 0f;
+		jumpBufferTimer = 0f;
+		coyoteTimer = 0f;
+		jumpTimer = jumpInterval;
+		rigidBody2D.velocity = new Vector2(horizontalSpeed, Mathf.Abs(upwardSpeed));
+	}
+
+	/// <summary>
+	/// 到达井口最高点后锁定角色，速度保持为 0。
+	/// </summary>
+	public void SetCutsceneHorizontalSpeed(float horizontalSpeed)
+	{
+		cutsceneMovementActive = true;
+		cutsceneHorizontalSpeed = horizontalSpeed;
+		rigidBody2D.velocity = new Vector2(horizontalSpeed, rigidBody2D.velocity.y);
 	}
 
 	private void UpdateTimer()

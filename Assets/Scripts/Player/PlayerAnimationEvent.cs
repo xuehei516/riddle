@@ -14,7 +14,7 @@ public class PlayerAnimationEvent : MonoBehaviour
 			horizontalSpeed = horizontalSpeed,
 			verticalSpeed = verticalSpeed,
 			isGrounded = isGrounded,
-			facingLeft = facingLeft
+			facingLeft = facingLeft,
 		});
 	}
 
