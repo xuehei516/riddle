@@ -125,8 +125,6 @@ public class PlayerController : MonoBehaviour
 		UpdateFacingDirection();
 		PublishAnimationState();
 
-		if (interactDownThisFrame)
-			TryPullNearbyLever();
 	}
 
 	private void FixedUpdate()
@@ -135,6 +133,9 @@ public class PlayerController : MonoBehaviour
 		{
 			ApplyReplayFrame();
 		}
+
+		if (interactDownThisFrame)
+			TryPullNearbyLever();
 
 		// 如果踩在移动平台上，水平速度要叠加平台的速度
 		float horizontalVelocity = cutsceneMovementActive
