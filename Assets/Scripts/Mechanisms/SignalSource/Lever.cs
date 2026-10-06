@@ -8,9 +8,6 @@ public class Lever : SignalSource
 {
 	[SerializeField] private Animator animator;
 
-
-	private string pullTrigger = "Pull";
-
 	/// <summary>
 	/// 是否已经被拉过了，拉过后不会再发出信号
 	/// </summary>

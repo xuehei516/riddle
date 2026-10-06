@@ -1,18 +1,41 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class MenuUI : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+	[Header("游戏场景设置")]
+	[SerializeField] private string gameSceneName = "MainGameScene（备份）";
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+	private bool isStartingGame;
+
+	/// <summary>
+	/// 开始游戏按钮调用
+	/// </summary>
+	public void StartGame()
+	{
+		if (isStartingGame)
+			return;
+
+		StartCoroutine(LoadGameSceneRoutine());
+	}
+
+	private IEnumerator LoadGameSceneRoutine()
+	{
+		isStartingGame = true;
+		Time.timeScale = 1f;
+
+		if (ScreenFader.Instance != null)
+			yield return ScreenFader.Instance.FadeOut();
+
+		SceneManager.LoadScene(gameSceneName);
+	}
+
+	/// <summary>
+	/// 退出游戏按钮调用
+	/// </summary>
+	public void QuitGame()
+	{
+		Application.Quit();
+	}
 }
