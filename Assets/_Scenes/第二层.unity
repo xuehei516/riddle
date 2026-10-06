@@ -622,7 +622,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1254150948}
   m_Layer: 0
-  m_Name: "\u5149\u6E90\u673A\u5173"
+  m_Name: "光源机关"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

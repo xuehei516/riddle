@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class CrumblePlatform : MovingPlatform
@@ -23,8 +24,9 @@ public class CrumblePlatform : MovingPlatform
 	[Header("组件引用")]
 	[SerializeField] private Collider2D platformCollider;
 	[SerializeField] private SpriteRenderer spriteRenderer;
+	[SerializeField] private TilemapRenderer tilemapRenderer;
 
-	private bool isCrumbling;
+    private bool isCrumbling;
 
 	protected override void FixedUpdate()
 	{
@@ -62,22 +64,31 @@ public class CrumblePlatform : MovingPlatform
 		isCrumbling = true;
 
 		float time = 0f;
+		float shakeOffsetX = 0f;
 		while (time < crumbleDelay)
 		{
 			time += Time.deltaTime;
 
-			transform.localPosition = transform.localPosition + new Vector3(Random.Range(-0.05f, 0.05f), 0f, 0f);
+			// 先移除上一帧的抖动，保留平台本身的移动，再施加新的偏移
+			Vector3 basePosition = transform.localPosition - new Vector3(shakeOffsetX, 0f, 0f);
+			shakeOffsetX = Random.Range(-0.05f, 0.05f);
+			transform.localPosition = basePosition + new Vector3(shakeOffsetX, 0f, 0f);
 			
 			yield return null;
 		}
+
+		transform.localPosition -= new Vector3(shakeOffsetX, 0f, 0f);
 
 		if (platformCollider != null)
 			platformCollider.enabled = false;
 		if (spriteRenderer != null)
 			spriteRenderer.enabled = false;
 
-		// 如果设置了重新生成时间，则等待一段时间后重新启用碰撞器和渲染器
-		if (respawnTime > 0f)
+		if (tilemapRenderer != null)
+			tilemapRenderer.enabled = false;
+
+        // 如果设置了重新生成时间，则等待一段时间后重新启用碰撞器和渲染器
+        if (respawnTime > 0f)
 		{
 			yield return new WaitForSeconds(respawnTime);
 
@@ -85,7 +96,9 @@ public class CrumblePlatform : MovingPlatform
 				platformCollider.enabled = true;
 			if (spriteRenderer != null)
 				spriteRenderer.enabled = true;
-			isCrumbling = false;
+			if (tilemapRenderer != null)
+				tilemapRenderer.enabled = true;
+            isCrumbling = false;
 		}
 	}
 
