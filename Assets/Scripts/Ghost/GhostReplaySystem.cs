@@ -1,29 +1,38 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem.Controls;
 
 /// <summary>
 /// 时间回溯（幽灵回放）主控制器。
 ///
-/// 流程：
-///   1) 按 R      → 记住玩家当前位置作为影子出生点，开始录制输入
-///   2) X 秒内自由操作（或提前再按 R 结束录制）
-///   3) 按 R      → 重载当前场景
-///   4) 重载完成后 → 在「按 R 时的位置」生成半透明影子，影子重放同一段输入
+/// 按键分工（F 管录制，R 管回放，互不重叠）：
+///   F → 录制开关：按一下开始录制，再按一下停止录制
+///   R → 回放最近一段录制（在当前场景就地生成影子重放，不重载场景）
+///
+/// 完整流程：
+///   1) 待机按 F             → 记住玩家当前位置作为影子出生点，开始录制输入
+///   2) 再按 F（或录满 X 秒）→ 录制结束，进入「就绪」
+///   3) 按 R                → 在当前场景生成半透明影子，影子重放同一段输入
+///
+/// 注意：回放不重载场景，所以关卡状态（拉杆、平台、敌人、已吃的道具）保持当前值不变。
 ///
 /// 使用方式：不需要手动摆对象——进游戏时脚本会自动创建一个 GhostManager。
-/// 想改 X 秒、影子颜色等参数，就在场景里手动建个空物体挂上本脚本（自动创建会跳过）。
+/// 想改录制秒数、影子颜色、按键等参数，就在场景里手动建个空物体挂上本脚本（自动创建会跳过）。
 /// </summary>
 public class GhostReplaySystem : MonoBehaviour
 {
 	public enum State { Idle, Recording, Ready, Replaying }
 
+	[Header("按键")]
+	[Tooltip("录制开关：按一下开始录制，再按一下停止录制")]
+	[SerializeField] private Key recordKey = Key.F;
+	[Tooltip("回放：重放最近一段录制（不重载场景）")]
+	[SerializeField] private Key replayKey = Key.R;
+
 	[Header("录制设置")]
-	[Tooltip("单次录制最长时长（秒）= 你的 X")]
+	[Tooltip("单次录制最长时长（秒），录满自动停止")]
 	[SerializeField] private float recordDuration = 5f;
-	[Tooltip("勾选后可在录满 X 秒前按 R 提前结束录制")]
-	[SerializeField] private bool allowEarlyStop = true;
 
 	[Header("影子外观")]
 	[Tooltip("影子颜色，默认半透明蓝")]
@@ -37,29 +46,26 @@ public class GhostReplaySystem : MonoBehaviour
 	[Tooltip("回放结束后销毁影子（默认留在原地待机）")]
 	[SerializeField] private bool destroyGhostAfterReplay = false;
 
+	[Header("调试")]
+	[Tooltip("在屏幕左上角显示当前状态与可用按键")]
+	[SerializeField] private bool showHud = true;
+
 	private State state = State.Idle;
 	private float recordTimer;
 	private GameObject ghost;
-	private bool isLoadingScene;
+	private GUIStyle hudStyle;
 
 	/// <summary>当前状态，方便在 Inspector 或调试时查看</summary>
 	public State CurrentState => state;
 
+	/// <summary>当前场景里的影子（没有则为 null）</summary>
+	public GameObject CurrentGhost => ghost;
+
 	#region 生命周期
 	private void Awake()
 	{
-		// 管理器必须活过场景重载，否则重载后就没人去生成影子了
+		// 管理器跨场景常驻：换场景后 F/R 依然可用，录制数据也不会丢
 		DontDestroyOnLoad(gameObject);
-	}
-
-	private void OnEnable()
-	{
-		SceneManager.sceneLoaded += OnSceneLoaded;
-	}
-
-	private void OnDisable()
-	{
-		SceneManager.sceneLoaded -= OnSceneLoaded;
 	}
 
 	/// <summary>场景里没手动挂本脚本时，自动创建一个，保证零配置可用</summary>
@@ -69,55 +75,42 @@ public class GhostReplaySystem : MonoBehaviour
 		if (FindObjectOfType<GhostReplaySystem>() != null) return;
 		new GameObject("GhostManager (auto)").AddComponent<GhostReplaySystem>();
 	}
-
-	/// <summary>新场景加载完成：有待回放数据就在录制起点生成影子</summary>
-	private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-	{
-		isLoadingScene = false;
-
-		if (!GhostReplayData.PendingReplay) return;
-
-		GhostReplayData.PendingReplay = false;
-		recordTimer = 0f;
-		SpawnGhost();
-		state = State.Replaying;
-	}
 	#endregion
 
 	#region 主循环
 	private void Update()
 	{
-		if (isLoadingScene) return;
+		Keyboard keyboard = Keyboard.current;
 
-		bool rPressed = Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame;
+		bool recordPressed = WasPressedThisFrame(keyboard, recordKey);
+		bool replayPressed = WasPressedThisFrame(keyboard, replayKey);
 
 		switch (state)
 		{
 			case State.Idle:
-				// R①：开始录制
-				if (rPressed) StartRecording();
+				// F：开始录制；R：手上还有上一段数据时可以直接再放一次
+				if (recordPressed) StartRecording();
+				else if (replayPressed) StartReplay();
 				break;
 
 			case State.Recording:
-				// 录满 X 秒由 FixedUpdate 自动收尾，这里负责"提前结束"
-				if (rPressed && allowEarlyStop) FinishRecording();
+				// F：停止录制。录制中按 R 不响应，避免半截数据被回放
+				if (recordPressed) FinishRecording();
+				else if (replayPressed) Debug.LogWarning($"[幽灵回放] 正在录制中，先按 {recordKey} 结束录制才能回放");
 				break;
 
 			case State.Ready:
-				// R②：重载场景 + 生成影子
-				if (rPressed) ReloadSceneAndReplay();
+				// F：覆盖旧数据重录；R：回放
+				if (recordPressed) StartRecording();
+				else if (replayPressed) StartReplay();
 				break;
 
 			case State.Replaying:
-				// 再按 R：清掉旧数据重新录一轮（影子要等下次重载才会被替换）
-				if (rPressed) StartRecording();
+				// F：就地重录（不重载场景）；R：再放一次；播完自动回待机
+				if (recordPressed) StartRecording();
+				else if (replayPressed) StartReplay();
+				else CheckReplayFinished();
 				break;
-		}
-
-		if (state == State.Replaying && ghost != null && destroyGhostAfterReplay)
-		{
-			PlayerController ghostController = ghost.GetComponent<PlayerController>();
-			if (ghostController != null && ghostController.ReplayFinished) Destroy(ghost);
 		}
 	}
 
@@ -129,14 +122,23 @@ public class GhostReplaySystem : MonoBehaviour
 
 		if (recordTimer >= recordDuration)
 		{
-			Debug.Log($"[幽灵回放] 已录满 {recordDuration} 秒");
+			Debug.Log($"[幽灵回放] 已录满 {recordDuration} 秒，自动停止");
 			FinishRecording();
 		}
+	}
+
+	/// <summary>某个按键这一帧是否刚被按下（没接键盘时返回 false）</summary>
+	private static bool WasPressedThisFrame(Keyboard keyboard, Key key)
+	{
+		if (keyboard == null) return false;
+
+		KeyControl control = keyboard[key];
+		return control != null && control.wasPressedThisFrame;
 	}
 	#endregion
 
 	#region 录制流程
-	/// <summary>R①：开始录制</summary>
+	/// <summary>F①：开始录制（会顺带清掉上一轮留下的影子）</summary>
 	private void StartRecording()
 	{
 		Transform player = FindPlayer();
@@ -146,17 +148,20 @@ public class GhostReplaySystem : MonoBehaviour
 			return;
 		}
 
+		// 开始新一轮录制，先把上一轮的影子清掉，避免场景里越叠越多
+		ClearGhost();
+
 		GhostReplayData.Reset();
 		GhostReplayData.IsRecording = true;
-		GhostReplayData.SpawnPosition = player.position; // 影子出生点 = 按下 R 时的玩家位置
+		GhostReplayData.SpawnPosition = player.position; // 影子出生点 = 按下 F 时的玩家位置
 
 		recordTimer = 0f;
 		state = State.Recording;
 
-		Debug.Log($"[幽灵回放] 开始录制，最长 {recordDuration} 秒");
+		Debug.Log($"[幽灵回放] 开始录制，最长 {recordDuration} 秒；再按 {recordKey} 结束");
 	}
 
-	/// <summary>结束录制并锁定数据（此时还没重载场景）</summary>
+	/// <summary>F②：结束录制并锁定数据</summary>
 	private void FinishRecording()
 	{
 		GhostReplayData.IsRecording = false;
@@ -165,39 +170,53 @@ public class GhostReplaySystem : MonoBehaviour
 		if (!GhostReplayData.HasRecording)
 		{
 			state = State.Idle;
-			Debug.LogWarning("[幽灵回放] 没录到任何帧，请重新按 R 录制");
+			Debug.LogWarning($"[幽灵回放] 没录到任何帧（{recordKey} 按太快了），请重新录制");
 			return;
 		}
 
 		state = State.Ready;
 		float seconds = GhostReplayData.Frames.Count * Time.fixedDeltaTime;
-		Debug.Log($"[幽灵回放] 录制完成：{GhostReplayData.Frames.Count} 帧（约 {seconds:F1} 秒）。再按一次 R 重载场景并生成影子");
+		Debug.Log($"[幽灵回放] 录制完成：{GhostReplayData.Frames.Count} 帧（约 {seconds:F1} 秒）。按 {replayKey} 就地回放");
+	}
+	#endregion
+
+	#region 回放流程
+	/// <summary>R：在当前场景就地重放上一段录制（不重载场景）</summary>
+	private void StartReplay()
+	{
+		if (!GhostReplayData.HasRecording || GhostReplayData.Frames.Count == 0)
+		{
+			Debug.LogWarning($"[幽灵回放] 还没有可回放的录制，先按 {recordKey} 录一段");
+			return;
+		}
+
+		// 不重载场景 → 必须手动清掉上一轮的影子，否则每按一次 R 就多一个
+		ClearGhost();
+
+		SpawnGhost();
+
+		if (ghost != null) state = State.Replaying;
 	}
 
-	/// <summary>R②：重载当前场景，重载完成后生成影子</summary>
-	private void ReloadSceneAndReplay()
+	/// <summary>影子把录制数据播完后，自动回到待机</summary>
+	private void CheckReplayFinished()
 	{
-		if (!GhostReplayData.HasRecording)
+		if (ghost == null)
 		{
 			state = State.Idle;
 			return;
 		}
 
-		GhostReplayData.PendingReplay = true;
-		isLoadingScene = true;
+		PlayerController ghostController = ghost.GetComponent<PlayerController>();
+		if (ghostController == null || !ghostController.ReplayFinished) return;
 
-		Scene active = SceneManager.GetActiveScene();
-		if (active.buildIndex >= 0)
+		if (destroyGhostAfterReplay)
 		{
-			SceneManager.LoadScene(active.buildIndex);
-		}
-		else
-		{
-			// 场景没加进 Build Settings 时兜底（按名字加载）
-			SceneManager.LoadScene(active.name);
+			ClearGhost();
 		}
 
-		Debug.Log("[幽灵回放] 重载场景中…");
+		state = State.Idle;
+		Debug.Log("[幽灵回放] 回放结束，回到待机");
 	}
 	#endregion
 
@@ -246,7 +265,7 @@ public class GhostReplaySystem : MonoBehaviour
 		}
 
 		// 交给同一个控制器走"回放分支"：从静止、无输入开始，保证和录制时的起始状态一致。
-		// 传一份拷贝：这样之后你按 R 重录（会清空 Frames）不会让正在跑的影子突然卡住。
+		// 传一份拷贝：这样之后按 F 重录（会清空 Frames）不会让正在跑的影子突然卡住。
 		PlayerController controller = ghost.GetComponent<PlayerController>();
 		if (controller != null)
 		{
@@ -256,10 +275,53 @@ public class GhostReplaySystem : MonoBehaviour
 		Debug.Log($"[幽灵回放] 影子已生成于 {GhostReplayData.SpawnPosition}，开始回放 {GhostReplayData.Frames.Count} 帧");
 	}
 
+	/// <summary>销毁当前影子并清空引用</summary>
+	private void ClearGhost()
+	{
+		if (ghost != null) Destroy(ghost);
+		ghost = null;
+	}
+
 	private Transform FindPlayer()
 	{
 		GameObject player = GameObject.FindGameObjectWithTag("Player");
 		return player != null ? player.transform : null;
+	}
+	#endregion
+
+	#region 屏幕提示
+	private void OnGUI()
+	{
+		if (!showHud) return;
+
+		if (hudStyle == null)
+		{
+			hudStyle = new GUIStyle(GUI.skin.label)
+			{
+				fontSize = 16,
+				fontStyle = FontStyle.Bold
+			};
+			hudStyle.normal.textColor = Color.white;
+		}
+
+		GUI.Label(new Rect(16f, 16f, 640f, 26f), BuildHint(), hudStyle);
+	}
+
+	private string BuildHint()
+	{
+		switch (state)
+		{
+			case State.Idle:
+				return $"[幽灵回放] 待机　按 {recordKey} 开始录制";
+			case State.Recording:
+				return $"[幽灵回放] 录制中 {recordTimer:F1}s / {recordDuration}s　按 {recordKey} 停止";
+			case State.Ready:
+				return $"[幽灵回放] 已就绪　按 {replayKey} 回放　按 {recordKey} 重录";
+			case State.Replaying:
+				return $"[幽灵回放] 回放中　按 {recordKey} 重录　按 {replayKey} 再放一次";
+			default:
+				return string.Empty;
+		}
 	}
 	#endregion
 }
