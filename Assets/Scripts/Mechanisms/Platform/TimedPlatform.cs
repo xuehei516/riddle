@@ -61,14 +61,20 @@ public class TimedPlatform : MovingPlatform
 		isRunning = true;
 
 		float time = 0f;
+		float shakeOffsetX = 0f;
 		while (time < activeTime)
 		{
 			time += Time.deltaTime;
 
-			transform.localPosition = transform.localPosition + new Vector3(Random.Range(-shakeAmount, shakeAmount), 0f, 0f);
+			// 先移除上一帧的抖动，保留平台本身的移动，再施加新的偏移。
+			Vector3 basePosition = transform.localPosition - new Vector3(shakeOffsetX, 0f, 0f);
+			shakeOffsetX = Random.Range(-shakeAmount, shakeAmount);
+			transform.localPosition = basePosition + new Vector3(shakeOffsetX, 0f, 0f);
 			
 			yield return null;
 		}
+
+		transform.localPosition -= new Vector3(shakeOffsetX, 0f, 0f);
 
 		if (platformCollider != null)
 			platformCollider.enabled = false;
