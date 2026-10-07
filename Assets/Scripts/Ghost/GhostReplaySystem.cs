@@ -33,7 +33,7 @@ public class GhostReplaySystem : MonoBehaviour
 
 	[Header("录制设置")]
 	[Tooltip("单次录制最长时长（秒），录满自动停止")]
-	[SerializeField] private float recordDuration = 5f;
+	[SerializeField] private float recordDuration = 8f;
 
 	[Header("影子外观")]
 	[Tooltip("影子颜色，默认半透明蓝")]
