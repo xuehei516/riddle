@@ -16,6 +16,14 @@ public class PressurePlate : SignalSource
 	[Tooltip("回弹速度")]
 	[SerializeField] private float releaseDuration = 0.12f;
 
+	[Header("关联的旋转机关")]
+	[Tooltip("踩住时绕自身中点旋转的物体（留空则不做旋转）")]
+	[SerializeField] private Transform rotatingTarget;
+	[Tooltip("旋转角速度，单位：度/秒")]
+	[SerializeField, Min(0f)] private float rotateSpeed = 90f;
+	[Tooltip("踩住时最多逆时针转过的角度（度）。松开时会沿原路顺时针转回 0")]
+	[SerializeField, Min(0f)] private float maxRotateAngle = 180f;
+
 	/// <summary>
 	/// 初始位置的 Y 坐标
 	/// </summary>
@@ -31,11 +39,36 @@ public class PressurePlate : SignalSource
 
 	private Coroutine moveCoroutine;
 
+	/// <summary>旋转机关的初始姿态，松开时回到这里</summary>
+	private Quaternion rotatingInitialRotation;
+	/// <summary>旋转机关的初始本地坐标（绕中点旋转会补偿位移，收尾时要还回去）</summary>
+	private Vector3 rotatingInitialLocalPosition;
+	/// <summary>用来算"自身中点"的渲染器</summary>
+	private Renderer rotatingRenderer;
+	/// <summary>当前相对初始姿态转过的角度（逆时针为正，度）</summary>
+	private float currentRotateAngle;
+
 	private void Awake()
 	{
-		if (pressDownSpriteTransform == null) return;
-		originalPositionY = pressDownSpriteTransform.localPosition.y;
-		pressedPositionY = originalPositionY - pressDownDistance;
+		if (pressDownSpriteTransform != null)
+		{
+			originalPositionY = pressDownSpriteTransform.localPosition.y;
+			pressedPositionY = originalPositionY - pressDownDistance;
+		}
+
+		// 记录旋转机关的初始姿态。注意不能写成提前 return，
+		// 否则没配下陷子物体时这段就永远不执行了
+		if (rotatingTarget != null)
+		{
+			rotatingInitialRotation = rotatingTarget.localRotation;
+			rotatingInitialLocalPosition = rotatingTarget.localPosition;
+			rotatingRenderer = rotatingTarget.GetComponentInChildren<Renderer>();
+		}
+	}
+
+	private void Update()
+	{
+		UpdateRotatingTarget();
 	}
 
 	private void OnTriggerEnter2D(Collider2D collision)
@@ -79,7 +112,52 @@ public class PressurePlate : SignalSource
 			position.y = originalPositionY;
 			pressDownSpriteTransform.localPosition = position;
 		}
+
+		// 旋转机关直接还回初始姿态
+		currentRotateAngle = 0f;
+		if (rotatingTarget != null)
+		{
+			rotatingTarget.localRotation = rotatingInitialRotation;
+			rotatingTarget.localPosition = rotatingInitialLocalPosition;
+		}
+
 		base.OnDisable();
+	}
+
+	/// <summary>
+	/// 踩住 → 逆时针转到 maxRotateAngle；松开 → 顺时针转回 0。
+	/// 目标是角度值，用 MoveTowards 逼近，所以速度恒定且不会过冲。
+	/// </summary>
+	private void UpdateRotatingTarget()
+	{
+		if (rotatingTarget == null) return;
+
+		float targetAngle = IsActive ? maxRotateAngle : 0f;
+		if (Mathf.Approximately(currentRotateAngle, targetAngle)) return;
+
+		currentRotateAngle = Mathf.MoveTowards(currentRotateAngle, targetAngle, rotateSpeed * Time.deltaTime);
+		ApplyRotateAngle(currentRotateAngle);
+	}
+
+	/// <summary>
+	/// 把物体摆到「初始姿态 + angle 度（逆时针为正）」。
+	/// 关键点：先记住旋转前视觉中点的世界坐标，转完再把中点推回原位 —— 
+	/// 这样才是绕**自身中点**转，而不是绕 Transform 轴心转（Sprite 轴心不在正中时会有明显公转位移）。
+	/// </summary>
+	private void ApplyRotateAngle(float angle)
+	{
+		Vector3 centerBefore = GetRotatingCenter();
+
+		rotatingTarget.localRotation = rotatingInitialRotation * Quaternion.Euler(0f, 0f, angle);
+
+		Vector3 centerAfter = GetRotatingCenter();
+		rotatingTarget.position += centerBefore - centerAfter;
+	}
+
+	/// <summary>取旋转物体的视觉中点；没有渲染器时退回轴心位置</summary>
+	private Vector3 GetRotatingCenter()
+	{
+		return rotatingRenderer != null ? rotatingRenderer.bounds.center : rotatingTarget.position;
 	}
 
 	/// <summary>
