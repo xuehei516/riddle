@@ -1187,7 +1187,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88db6d70f31540f4aa0e5de77d11659a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameSceneName: "MainGameScene\uFF08\u5907\u4EFD\uFF09"
+  gameSceneName: Level01
 --- !u!1001 &1318763910
 PrefabInstance:
   m_ObjectHideFlags: 0
