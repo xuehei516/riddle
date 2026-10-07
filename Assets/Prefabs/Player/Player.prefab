@@ -811,7 +811,7 @@ MonoBehaviour:
   groundCheckRadius: 0.1
   groundLayer:
     serializedVersion: 2
-    m_Bits: 768
+    m_Bits: 2944
   isGhost: 0
   interactRadius: 1.2
 --- !u!114 &7222564410819005714
