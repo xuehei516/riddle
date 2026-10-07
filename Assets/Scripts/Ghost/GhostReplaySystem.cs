@@ -183,6 +183,11 @@ public class GhostReplaySystem : MonoBehaviour
 		recordTimer = 0f;
 		state = State.Recording;
 
+		if (AudioManager.instance != null)
+		{
+			AudioManager.instance.Play("录制音效");
+		}
+
 		Debug.Log($"[幽灵回放] 开始录制，最长 {recordDuration} 秒；再按 {recordKey} 结束");
 	}
 
@@ -221,7 +226,15 @@ public class GhostReplaySystem : MonoBehaviour
 		replayTimer = 0f; // 回放计时归零，滑动条从「本段录制时长」开始倒转
 		SpawnGhost();
 
-		if (ghost != null) state = State.Replaying;
+		if (ghost != null)
+		{
+			state = State.Replaying;
+
+			if (AudioManager.instance != null)
+			{
+				AudioManager.instance.Play("重演音效");
+			}
+		}
 	}
 
 	/// <summary>影子把录制数据播完后，自动回到待机</summary>

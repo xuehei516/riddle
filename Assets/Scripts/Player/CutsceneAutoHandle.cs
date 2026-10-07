@@ -72,6 +72,11 @@ public class CutsceneAutoHandle : MonoBehaviour
 	{
 		isAutoHandling = true;
 
+		if (CutsceneBars.Instance != null)
+		{
+			CutsceneBars.Instance.Show();
+		}
+
 		// 禁用玩家手动按键输入
 		if (playerInput != null)
 			playerInput.DeactivateInput();
@@ -160,13 +165,16 @@ public class CutsceneAutoHandle : MonoBehaviour
 			playerController.EndCutsceneMovement();
 		else
 			rb.velocity = new Vector2(0, rb.velocity.y);
+
 		isAutoHandling = false;
 		if (playerInput != null)
 			playerInput.ActivateInput();
 
 		GameTimer.Instance.StartTimer();
-
-		Debug.Log("自动行走结束");
+		if (CutsceneBars.Instance != null)
+		{
+			CutsceneBars.Instance.Hide();
+		}
 	}
 
 	private IEnumerator WaitForJumpInput()

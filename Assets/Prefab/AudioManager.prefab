@@ -46,23 +46,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   AudioTypes:
   - Source: {fileID: 0}
-    Clip: {fileID: 8300000, guid: a78303900de031545bfe54fdf32f9c69, type: 3}
+    Clip: {fileID: 8300000, guid: 2c76f15e3a22497468fa5692b582700e, type: 3}
     Group: {fileID: -4145185395779955037, guid: 2de227838044e1d48a2c6932c7245c80, type: 2}
-    Name: BGM
-    Volume: 0.036
+    Name: "\u6807\u9898\u97F3\u4E50"
+    Volume: 0.05
     Pitch: 1
     Loop: 1
   - Source: {fileID: 0}
-    Clip: {fileID: 8300000, guid: 817f3bc772412ae41b8b5fb335475506, type: 3}
+    Clip: {fileID: 8300000, guid: 5a9033cd30017774db1f341161d54ac3, type: 3}
+    Group: {fileID: -4145185395779955037, guid: 2de227838044e1d48a2c6932c7245c80, type: 2}
+    Name: "\u68EE\u6797\u97F3\u4E50"
+    Volume: 0.05
+    Pitch: 1
+    Loop: 1
+  - Source: {fileID: 0}
+    Clip: {fileID: 8300000, guid: 4a7d9545f11930a4e8911776b193ca98, type: 3}
     Group: {fileID: 6690669289600384198, guid: 2de227838044e1d48a2c6932c7245c80, type: 2}
-    Name: Attack
-    Volume: 0.036
+    Name: "\u5F55\u5236\u97F3\u6548"
+    Volume: 0.326
     Pitch: 1
     Loop: 0
   - Source: {fileID: 0}
-    Clip: {fileID: 8300000, guid: 03ede8719fbe6fc4e9fe6dec1f1b79db, type: 3}
+    Clip: {fileID: 8300000, guid: 1a8eb3232bce7634c81f534f101d7f50, type: 3}
     Group: {fileID: 6690669289600384198, guid: 2de227838044e1d48a2c6932c7245c80, type: 2}
-    Name: Bow
-    Volume: 0.226
+    Name: "\u91CD\u6F14\u97F3\u6548"
+    Volume: 0.326
     Pitch: 1
     Loop: 0

@@ -34,7 +34,7 @@ public class GameTimer : MonoBehaviour
 			int minutes = Mathf.FloorToInt(ElapsedTime / 60f);
 			int seconds = Mathf.FloorToInt(ElapsedTime % 60f);
 
-			timerText.text = $"游戏时间： {minutes:00}:{seconds:00}";
+			timerText.text = $"{minutes:00}：{seconds:00}";
 		}
 	}
 
