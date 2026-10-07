@@ -9,6 +9,14 @@ public class MenuUI : MonoBehaviour
 
 	private bool isStartingGame;
 
+	private void Start()
+	{
+		if (AudioManager.instance != null)
+		{
+			AudioManager.instance.Play("标题音乐");
+		}
+	}
+
 	/// <summary>
 	/// 开始游戏按钮调用
 	/// </summary>

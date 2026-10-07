@@ -23,8 +23,9 @@ public class LightBeamArea : MonoBehaviour
 	private Mesh mesh;
 	private MeshFilter meshFilter;
 	private PolygonCollider2D polyCollider;
+	private MeshRenderer meshRenderer;
 
-	// 缓存数组，防止每帧 GC 产生微卡顿
+	// 缓存数组
 	/// <summary>
 	/// 保存 Mesh 顶点位置
 	/// </summary>
@@ -46,7 +47,9 @@ public class LightBeamArea : MonoBehaviour
 	{
 		meshFilter = GetComponent<MeshFilter>();
 		polyCollider = GetComponent<PolygonCollider2D>();
+		meshRenderer = GetComponent<MeshRenderer>();
 
+		meshRenderer.sortingOrder = 5;
 		mesh = new Mesh();
 		mesh.name = "DynamicLightBeamMesh";
 		meshFilter.mesh = mesh;

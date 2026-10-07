@@ -22157,18 +22157,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -6517835110455060184, guid: da9939864417ec74c9a66f24be01ed2e, type: 3}
-      propertyPath: ShapeModule.m_Scale.x
-      value: 90.6
-      objectReference: {fileID: 0}
-    - target: {fileID: -6517835110455060184, guid: da9939864417ec74c9a66f24be01ed2e, type: 3}
-      propertyPath: ShapeModule.m_Scale.y
-      value: 62.1
-      objectReference: {fileID: 0}
-    - target: {fileID: -6517835110455060184, guid: da9939864417ec74c9a66f24be01ed2e, type: 3}
-      propertyPath: InitialModule.maxNumParticles
-      value: 50
-      objectReference: {fileID: 0}
     - target: {fileID: 2982119701752871467, guid: da9939864417ec74c9a66f24be01ed2e, type: 3}
       propertyPath: m_LocalPosition.x
       value: -37
@@ -29000,6 +28988,10 @@ PrefabInstance:
       propertyPath: jumpTargetPoint
       value: 
       objectReference: {fileID: 949568824}
+    - target: {fileID: 3266908598035247656, guid: ce480a829c0187f4dad32d5c3b03b90c, type: 3}
+      propertyPath: m_Mass
+      value: 0.56290185
+      objectReference: {fileID: 0}
     - target: {fileID: 4311621302735758773, guid: ce480a829c0187f4dad32d5c3b03b90c, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
