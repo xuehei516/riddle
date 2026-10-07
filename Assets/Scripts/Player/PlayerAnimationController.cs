@@ -40,7 +40,7 @@ public class PlayerAnimationController : MonoBehaviour
 		playerAnimationEvent.OnAttack += OnAttack;
 	}
 
-	private void OnDisable()
+	private void OnDestroy()
 	{
 		playerAnimationEvent.OnAnimationStateChanged -= OnAnimationStateChanged;
 
