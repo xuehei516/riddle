@@ -16,12 +16,15 @@ public class Lever : SignalSource
 	/// </summary>
 	private bool wasPulled = false;
 
-	private void Awake()
+	protected virtual void Awake()
 	{
 		spriteRenderer = GetComponent<SpriteRenderer>();
 	}
 
-	public void TryPull()
+	/// <summary>
+	/// 切换开关状态：拉一次开、再拉一次关（子类可以 override 追加自己的效果）
+	/// </summary>
+	public virtual void TryPull()
 	{
 		wasPulled = !wasPulled;
 		SetSignal(wasPulled);

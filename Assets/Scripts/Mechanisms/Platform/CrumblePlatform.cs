@@ -27,6 +27,10 @@ public class CrumblePlatform : MovingPlatform
 	[SerializeField] private TilemapRenderer tilemapRenderer;
 
     private bool isCrumbling;
+    /// <summary>正在跑的碎裂协程，复位时要停掉</summary>
+    private Coroutine crumbleRoutine;
+    /// <summary>碎裂前的抖动偏移，复位时要从位置上减掉</summary>
+    private float shakeOffsetX;
 
 	protected override void FixedUpdate()
 	{
@@ -56,7 +60,7 @@ public class CrumblePlatform : MovingPlatform
 	private void BeginCrumble()
 	{
 		if (!isCrumbling)
-			StartCoroutine(CrumbleRoutine());
+			crumbleRoutine = StartCoroutine(CrumbleRoutine());
 	}
 
 	private IEnumerator CrumbleRoutine()
@@ -64,7 +68,7 @@ public class CrumblePlatform : MovingPlatform
 		isCrumbling = true;
 
 		float time = 0f;
-		float shakeOffsetX = 0f;
+		shakeOffsetX = 0f;
 		while (time < crumbleDelay)
 		{
 			time += Time.deltaTime;
@@ -99,7 +103,35 @@ public class CrumblePlatform : MovingPlatform
 			if (tilemapRenderer != null)
 				tilemapRenderer.enabled = true;
             isCrumbling = false;
+			crumbleRoutine = null;
 		}
+	}
+
+	/// <summary>
+	/// 复位成「完好」状态：停掉碎裂协程、清掉抖动偏移、重新打开碰撞体和渲染器。
+	/// 拉杆之类的开关重新启用本平台时会调用——只 SetActive(true) 的话，
+	/// 平台会永远卡在「已粉碎」里（协程被失活打断，isCrumbling 没人置回 false）。
+	/// </summary>
+	public override void ResetPlatform()
+	{
+		if (crumbleRoutine != null)
+		{
+			StopCoroutine(crumbleRoutine);
+			crumbleRoutine = null;
+		}
+
+		isCrumbling = false;
+
+		// 抖动可能停在中途，位置要还原
+		transform.localPosition -= new Vector3(shakeOffsetX, 0f, 0f);
+		shakeOffsetX = 0f;
+
+		if (platformCollider != null)
+			platformCollider.enabled = true;
+		if (spriteRenderer != null)
+			spriteRenderer.enabled = true;
+		if (tilemapRenderer != null)
+			tilemapRenderer.enabled = true;
 	}
 
 	/// <summary>

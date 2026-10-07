@@ -58,11 +58,11 @@ public class MovingPlatform : MonoBehaviour
 	}
 
 	/// <summary>
-	/// 设置信号源的激活状态
+	/// 设置信号源的激活状态（信号源是通过基类字段调用过来的，子类可以 override 来记自己的状态）
 	/// </summary>
 	/// <param name="source">信号源</param>
 	/// <param name="active">是否激活</param>
-	public void SetSignal(SignalSource source, bool active)
+	public virtual void SetSignal(SignalSource source, bool active)
 	{
 		if (source == null) 
 			return;
@@ -71,5 +71,14 @@ public class MovingPlatform : MonoBehaviour
 			activeSources.Add(source);
 		else
 			activeSources.Remove(source);
+	}
+
+	/// <summary>
+	/// 把平台复位成「完好的初始状态」。
+	/// 自己管着可见性 / 碰撞体开关的子类（易碎平台、限时平台）要 override：
+	/// 外面的开关（比如拉杆）重新启用平台时会调它，否则平台可能一直卡在「已粉碎 / 已消失」的状态里。
+	/// </summary>
+	public virtual void ResetPlatform()
+	{
 	}
 }
