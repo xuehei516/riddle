@@ -42,17 +42,23 @@ public class LightBeamArea : MonoBehaviour
 	/// </summary>
 	private Vector2[] colliderPath;
 
+	private MeshRenderer meshRenderer;
+
 	private void Awake()
 	{
 		meshFilter = GetComponent<MeshFilter>();
 		polyCollider = GetComponent<PolygonCollider2D>();
+		meshRenderer = GetComponent<MeshRenderer>();
+
 
 		mesh = new Mesh();
 		mesh.name = "DynamicLightBeamMesh";
 		meshFilter.mesh = mesh;
+		meshRenderer.sortingOrder = 5;
 
-		// 初始化网格和顶点缓存
-		InitBuffers();
+
+        // 初始化网格和顶点缓存
+        InitBuffers();
 	}
 
 	/// <summary>
