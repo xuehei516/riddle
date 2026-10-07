@@ -95,6 +95,9 @@ public class LightBeamArea : MonoBehaviour
 	private void Update()
 	{
 		GenerateLightMesh();
+
+		// 网格刷新完再判影子，用的是本帧最新的光束形状
+		DestroyGhostInsideBeam();
 	}
 
 	/// <summary>
@@ -151,9 +154,11 @@ public class LightBeamArea : MonoBehaviour
 	/// <param name="collision"></param>
 	private void OnTriggerEnter2D(Collider2D collision)
 	{
-		if (collision.CompareTag("Ghost"))
+		if (IsGhost(collision))
 		{
-			Destroy(collision.gameObject);
+			// 影子本体挂在哪一层子物体上不一定，统一销毁带 PlayerController 的那个
+			DestroyGhost(collision);
+			return;
 		}
 
 		if (collision.CompareTag("Player"))
@@ -185,6 +190,49 @@ public class LightBeamArea : MonoBehaviour
 		}
 	}
 	
+	/// <summary>
+	/// 这个碰撞体是不是幽灵影子。
+	/// 不只认 "Ghost" 标签：影子出生时被设成了 Untagged（防止 FindWithTag("Player") 抓错对象），
+	/// 所以直接认 PlayerController.IsGhost 更可靠。
+	/// </summary>
+	private static bool IsGhost(Collider2D collision)
+	{
+		if (collision == null) return false;
+		if (collision.CompareTag("Ghost")) return true;
+
+		PlayerController controller = collision.GetComponentInParent<PlayerController>();
+		return controller != null && controller.IsGhost;
+	}
+
+	/// <summary>销毁这个碰撞体所属的影子（优先销毁带 PlayerController 的那个根物体）</summary>
+	private static void DestroyGhost(Collider2D collision)
+	{
+		if (collision == null) return;
+
+		PlayerController controller = collision.GetComponentInParent<PlayerController>();
+		Destroy(controller != null ? controller.gameObject : collision.gameObject);
+	}
+
+	/// <summary>
+	/// 影子进入光束就销毁。
+	/// 不依赖 OnTriggerEnter2D：层矩阵里 LightBeam 与 Ghost 的交叉格可能是关的，
+	/// 那样触发器根本不会响；这里用纯几何判定，绕开层矩阵与 Tag。
+	/// </summary>
+	private void DestroyGhostInsideBeam()
+	{
+		GameObject ghost = GhostReplaySystem.ActiveGhost;
+		if (ghost == null) return;
+
+		Collider2D ghostCollider = ghost.GetComponentInChildren<Collider2D>();
+		if (ghostCollider == null || !ghostCollider.enabled) return;
+
+		// 两个判定取并集：实体相交（准）或视觉中点在光束多边形内（Distance 对触发器不适用时兜底）
+		bool touched = polyCollider.Distance(ghostCollider).isOverlapped
+		               || polyCollider.OverlapPoint(ghostCollider.bounds.center);
+
+		if (touched) Destroy(ghost);
+	}
+
 	/// <summary>
 	/// 在指定位置生成灵魂预制体
 	/// </summary>

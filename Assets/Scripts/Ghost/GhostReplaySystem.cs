@@ -71,6 +71,12 @@ public class GhostReplaySystem : MonoBehaviour
 	/// <summary>当前场景里的影子（没有则为 null）</summary>
 	public GameObject CurrentGhost => ghost;
 
+	/// <summary>
+	/// 静态入口：外部系统（如光源要"照到影子就销毁"）不用拿到管理器引用就能找到当前影子。
+	/// 影子被销毁后这里会自然变成"假 null"，外部判空即可。
+	/// </summary>
+	public static GameObject ActiveGhost { get; private set; }
+
 	#region 生命周期
 	private void Awake()
 	{
@@ -261,6 +267,8 @@ public class GhostReplaySystem : MonoBehaviour
 		ghost.name = "Ghost";
 		ghost.tag = "Untagged"; // 防止之后 FindWithTag("Player") 找到影子而不是玩家
 
+		ActiveGhost = ghost; // 供外部系统（如光源）查询当前影子
+
 		// 换到 Ghost 层。克隆来的层是 Player，而物理矩阵里 Player×Player 是关闭的——
 		// 留在 Player 层的话影子永远不可能和玩家发生物理接触，下面的开关也就成了死开关。
 		ApplyGhostLayer();
@@ -309,6 +317,7 @@ public class GhostReplaySystem : MonoBehaviour
 	{
 		if (ghost != null) Destroy(ghost);
 		ghost = null;
+		ActiveGhost = null;
 	}
 
 	/// <summary>
