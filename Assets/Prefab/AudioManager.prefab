@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1206447967311313438
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7065272186526949973}
+  - component: {fileID: 2805037625419949522}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7065272186526949973
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1206447967311313438}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2805037625419949522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1206447967311313438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a50404542e03ae541a0cc0576580f6b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  AudioTypes:
+  - Source: {fileID: 0}
+    Clip: {fileID: 8300000, guid: a78303900de031545bfe54fdf32f9c69, type: 3}
+    Group: {fileID: -4145185395779955037, guid: 2de227838044e1d48a2c6932c7245c80, type: 2}
+    Name: BGM
+    Volume: 0.036
+    Pitch: 1
+    Loop: 1
+  - Source: {fileID: 0}
+    Clip: {fileID: 8300000, guid: 817f3bc772412ae41b8b5fb335475506, type: 3}
+    Group: {fileID: 6690669289600384198, guid: 2de227838044e1d48a2c6932c7245c80, type: 2}
+    Name: Attack
+    Volume: 0.036
+    Pitch: 1
+    Loop: 0
+  - Source: {fileID: 0}
+    Clip: {fileID: 8300000, guid: 03ede8719fbe6fc4e9fe6dec1f1b79db, type: 3}
+    Group: {fileID: 6690669289600384198, guid: 2de227838044e1d48a2c6932c7245c80, type: 2}
+    Name: Bow
+    Volume: 0.226
+    Pitch: 1
+    Loop: 0

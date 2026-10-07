@@ -676,6 +676,7 @@ MonoBehaviour:
   playerHealth: {fileID: 0}
   playerAnimationController: {fileID: 0}
   destroyed: {fileID: 0}
+  spriteRenderer: {fileID: 0}
   destroyedEvent: {fileID: 0}
   playerAnimationEvent: {fileID: 0}
   isInLightZone: 0
