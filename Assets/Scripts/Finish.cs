@@ -8,6 +8,8 @@ public class Finish : MonoBehaviour
 {
 	[SerializeField] private Image image;
 
+
+
 	private void OnTriggerEnter2D(Collider2D collision)
 	{
 		if (collision.TryGetComponent<PlayerInput>(out var playerInput))
